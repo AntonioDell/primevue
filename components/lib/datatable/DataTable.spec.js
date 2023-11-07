@@ -7,6 +7,7 @@ import Column from '../column/Column.vue';
 import ColumnGroup from '../columngroup/ColumnGroup.vue';
 import Row from '../row/Row.vue';
 import DataTable from './DataTable.vue';
+import { defineComponent, h, nextTick } from 'vue';
 
 window.URL.createObjectURL = function () {};
 
@@ -1409,4 +1410,43 @@ describe('DataTable.vue', () => {
     });
 
     // row styling
+
+    // provide registerColumn
+    it('should have basic demo with column wrapper', async () => {
+        const ColumnWrapper = defineComponent({
+            name: 'ColumnWrapper',
+            components: {
+                Column
+            },
+            render() {
+                return [h(Column, { expander: true }), h(Column, { field: 'name', header: 'Name' }), h(Column, { field: 'code', header: 'Code' })];
+            }
+        });
+        wrapper = mount(DataTable, {
+            global: {
+                plugins: [PrimeVue],
+                components: {
+                    ColumnWrapper
+                }
+            },
+            props: {
+                value: smallData,
+                registerColumns: true
+            },
+            slots: {
+                default: `<ColumnWrapper></ColumnWrapper>`
+            }
+        });
+
+        // Since registerColumn is called on Column mount, it is not immediate
+        await nextTick();
+
+        expect(wrapper.findAll('.p-column-header-content').length).toEqual(3);
+        const tbody = wrapper.find('.p-datatable-tbody');
+
+        expect(tbody.findAll('tr').length).toEqual(3);
+
+        const rows = tbody.findAll('tr');
+        expect(rows[0].findAll('td').length).toEqual(3);
+    });
 });
